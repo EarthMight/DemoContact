@@ -5,37 +5,12 @@ public class ContactModel {
     String Id;
     String Name;
     String Number;
-    int Color;
+    String Color;
     int FSize;
     int DataIndex;
 
-
-    public ContactModel(String id, String name, String number, int color, int FSize) {
+    public ContactModel(String id, String name, String number, String color, int FSize, int dataIndex) {
         Id = id;
-        Name = name;
-        Number = number;
-        Color = color;
-        this.FSize = FSize;
-    }
-
-    public ContactModel(String name, String number, int color, int FSize) {
-        Name = name;
-        Number = number;
-        Color = color;
-        this.FSize = FSize;
-    }
-
-    public ContactModel(String name, String number) {
-        Name = name;
-        Number = number;
-    }
-
-    public ContactModel(int color, int FSize) {
-        Color = color;
-        this.FSize = FSize;
-    }
-
-    public ContactModel(String name, String number, int color, int FSize, int dataIndex) {
         Name = name;
         Number = number;
         Color = color;
@@ -43,7 +18,11 @@ public class ContactModel {
         DataIndex = dataIndex;
     }
 
-    public ContactModel(int dataIndex) {
+    public ContactModel(String name, String number, String color, int FSize, int dataIndex) {
+        Name = name;
+        Number = number;
+        Color = color;
+        this.FSize = FSize;
         DataIndex = dataIndex;
     }
 
@@ -71,11 +50,11 @@ public class ContactModel {
         Number = number;
     }
 
-    public int getColor() {
+    public String getColor() {
         return Color;
     }
 
-    public void setColor(int color) {
+    public void setColor(String color) {
         Color = color;
     }
 

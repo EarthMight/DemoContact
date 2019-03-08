@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".textFrag">
+
+    <me.angrybyte.numberpicker.view.ActualNumberPicker
+        android:id="@+id/actual_picker"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"
+        android:background="#9e9d24"
+        app:bar_color="@android:color/white"
+        app:bar_width="2dp"
+        app:bars_count="10"
+        app:max_value="100"
+        app:min_value="0"
+        app:show_controls="false"
+        app:show_fast_controls="false"
+        app:show_text="true"
+        app:text_color="@android:color/white"
+        app:text_size="20sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center">
+
+        <ru.dimorinny.floatingtextbutton.FloatingTextButton
+            android:layout_width="wrap_content"
+            android:id="@+id/selectok"
+            android:layout_height="wrap_content"
+            app:layout_behavior="ru.dimorinny.floatingtextbutton.behavior.SnackbarBehavior"
+            app:floating_background_color="?attr/colorPrimary"
+            app:floating_title="Ok"
+            app:floating_title_color="@android:color/white"/>
+    </LinearLayout>
+</LinearLayout>

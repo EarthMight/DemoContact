@@ -21,7 +21,6 @@ public class CustomListAdapter extends ArrayAdapter<CustomDataListModel> {
     Context context;
     int resource;
     CustomItemClickListener listener;
-    SQliteHelperClass myhelper;
     ArrayList<Integer> AdColor;
     ArrayList<Integer> Adfont;
 
@@ -31,7 +30,7 @@ public class CustomListAdapter extends ArrayAdapter<CustomDataListModel> {
         this.context = context;
         this.resource = resource;
         this.listener = listener;
-        myhelper=new SQliteHelperClass(context.getApplicationContext());
+
         notifyDataSetChanged();
     }
 
@@ -72,53 +71,11 @@ public class CustomListAdapter extends ArrayAdapter<CustomDataListModel> {
         Name.setText(customDataListModel.getName());
         Number.setText(customDataListModel.getNumber());
 
-//##############################################################################
-        Cursor cursor=myhelper.getAllData();
-        if(cursor.getCount() ==0){
-            Toast.makeText(context.getApplicationContext(),"No Contact Selected",Toast.LENGTH_SHORT).show();
-
-            return convertView;
-        }
-        StringBuffer stringBuffer= new StringBuffer();
-        while (cursor.moveToNext()) {
-
-            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
-            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
-            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
-            stringBuffer.append("color :"+ cursor.getInt(3)+"\n");
-            stringBuffer.append("Font Size :"+ cursor.getInt(4)+"\n");
-
-            Name.setTextColor(cursor.getInt(3));
-            Name.setTextSize(cursor.getInt(4));
-
-//            Number.setTextColor(cursor.getInt(3));
-//            Number.setTextSize(cursor.getInt(4));
-
-        }
-
         return convertView;
     }
 
-    public void DataRead(){
-
-        Cursor cursor=myhelper.getAllData();
-        if(cursor.getCount() ==0){
-            Toast.makeText(context.getApplicationContext(),"No Contact Selected",Toast.LENGTH_SHORT).show();
-
-            return;
-
-        }
-        StringBuffer stringBuffer= new StringBuffer();
-        while (cursor.moveToNext()) {
-
-            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
-            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
-            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
-            stringBuffer.append("color :"+ cursor.getInt(3)+"\n");
-            stringBuffer.append("Font Size :"+ cursor.getInt(4)+"\n");
-        }
 
 //            ViewDataDialog("DataRecords",String.valueOf(stringBuffer));
 
-    }
+
 }

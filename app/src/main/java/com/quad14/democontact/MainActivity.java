@@ -28,19 +28,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bestsoft32.tt_fancy_gif_dialog_lib.TTFancyGifDialog;
+import com.google.gson.Gson;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.jar.Attributes;
 
-public class MainActivity extends AppCompatActivity implements CustomRecycleAdapter.OnDragStartListener{
+import static com.quad14.democontact.CustomRecycleAdapter.chCustom;
+import static com.quad14.democontact.CustomRecycleAdapter.reCustom;
+import static com.quad14.democontact.CustomRecycleAdapter.removeflag;
+
+public class MainActivity extends AppCompatActivity implements CustomRecycleAdapter.OnDragStartListener,OnCustomerListChangedListener{
     private static final String TAG = MainActivity.class.getSimpleName();
     private Toolbar mainToolBar;
-    private ImageView AddImage,OpenData,ViewArray;
+    private ImageView AddImage,OpenData,ViewArray,dod;
     private TextView NameT,ContactNoT;
-    SQliteHelperClass myhelper;
+    TempSqliteDatabaseHelper tempSqliteDatabaseHelper;
     static final int REQUEST_CODE_ADDRESS_BOOK=1;
     private Uri uriContact;
     private String contactID;
@@ -53,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
     Thread ListUpdateThread;
     ArrayList<String> DataNameArrayList;
     private ItemTouchHelper mItemTouchHelper;
+    List<Integer> LastIndexGetter;
+
+    Boolean swapChecker=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,10 +74,8 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
         AddImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
                 startActivityForResult(intent , REQUEST_CODE_ADDRESS_BOOK);
-
 
             }
         });
@@ -76,27 +83,26 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
         OpenData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                DatatestRead();
-
-//                DataReadLastRecord();
+                    TDatatestRead();
+                    Log.e("Tdata","Tdata");
             }
         });
+        TDataRead();
 
-        DataRead();
-
-       customRecycleAdapter=new CustomRecycleAdapter(this,getApplicationContext(), customDataListModelList, new CustomItemClickListener() {
+       customRecycleAdapter=new CustomRecycleAdapter(this,this,getApplicationContext(), customDataListModelList, new CustomItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
 
                 int pos=position;
                 String name=customDataListModelList.get(position).getName();
                 String number=customDataListModelList.get(position).getNumber();
+                String Id = customDataListModelList.get(position).getId();
 
-//                Intent ContactData=new Intent(MainActivity.this,ConfigContact.class);
-//                ContactData.putExtra("CName",name);
-//                ContactData.putExtra("CNumber",number);
-//                startActivity(ContactData);
+                Intent ContactData=new Intent(MainActivity.this,ConfigContact.class);
+                ContactData.putExtra("CName",name);
+                ContactData.putExtra("CNumber",number);
+                ContactData.putExtra("CId",Id);
+                startActivity(ContactData);
 
                Toast.makeText(getApplicationContext(),String.valueOf(pos),Toast.LENGTH_SHORT).show();
 
@@ -112,14 +118,15 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
         mItemTouchHelper = new ItemTouchHelper(callback);
         mItemTouchHelper.attachToRecyclerView(recyclerView);
 
+        SwipeToDismiss swipeToDismiss = new SwipeToDismiss(getApplicationContext(), ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+        swipeToDismiss.setLeftBackgroundColor(R.color.Red);
+        swipeToDismiss.setRightBackgroundColor(R.color.Green);
+        swipeToDismiss.setLeftImg(R.drawable.ic_delete_black_24dp);
+        swipeToDismiss.setRightImg(R.drawable.ic_delete_black_24dp);
+        swipeToDismiss.setSwipetoDismissCallBack(getCallback(customRecycleAdapter));
 
-        ViewArray.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ValidateDataRead();
-
-            }
-        });
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDismiss);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
 
 
     }
@@ -128,13 +135,14 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
 
         mainToolBar=(Toolbar)findViewById(R.id.toolbar);
         AddImage=(ImageView)findViewById(R.id.addimag);
-        myhelper=new SQliteHelperClass(MainActivity.this);
         OpenData=(ImageView)findViewById(R.id.opendata);
-//        listView=(ListView)findViewById(R.id.listcontact);
+//      listView=(ListView)findViewById(R.id.listcontact);
         recyclerView=(RecyclerView)findViewById(R.id.listRecycle);
         customDataListModelList=new ArrayList<>();
         DataNameArrayList=new ArrayList<>();
-        ViewArray=(ImageView)findViewById(R.id.viewArray);
+
+        LastIndexGetter=new ArrayList<>();
+        tempSqliteDatabaseHelper=new TempSqliteDatabaseHelper(this);
 
     }
 
@@ -147,8 +155,9 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
                 if (resultCode == Activity.RESULT_OK) {
                     Log.d(TAG, "Response: " + data.toString());
                     uriContact = data.getData();
-                    DataAdd(getDisplayName(),getPhNumber(),R.color.colorPrimary,25);
-                    DataRead();
+
+                    tempinsert(getDisplayName(),getPhNumber(),"#2d2d2d",35,1);
+                    TDataRead();
                     customRecycleAdapter.notifyDataSetChanged();
                 }
                 break;
@@ -174,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
 
     }
 
-//#####################-Methods of getting Various data--##################
+//#####################-Methods of getting Various data--#################
 
     public String getDisplayName(){
         Cursor c =  getContentResolver().query(uriContact, null, null, null, null);
@@ -260,160 +269,6 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
         return photo;
     }
 
-//#####################--DataBase Stuff--#################################
-    public void DataAdd(String name,String num,int color,int size){
-        boolean inSamedata=myhelper.IsItemExist(name,num);
-
-        if(inSamedata==false){
-
-            boolean indata = myhelper.insertData(new ContactModel(name,num,color,size));
-
-
-            if (indata == true) {
-
-                Toast.makeText(getApplicationContext(),"DataSave",Toast.LENGTH_SHORT).show();
-
-            }
-            else{
-
-                Toast.makeText(getApplicationContext(),"In Data not True",Toast.LENGTH_SHORT).show();
-
-            }
-        }else if(inSamedata==true){
-
-
-            Toast.makeText(getApplicationContext(),"Record Exist",Toast.LENGTH_SHORT).show();
-
-
-        }
-
-    }
-
-    public void DataRead(){
-
-        customDataListModelList.clear();
-        Cursor cursor=myhelper.getAllData();
-        if(cursor.getCount() ==0){
-            Toast.makeText(getApplicationContext(),"No Contact Selected",Toast.LENGTH_SHORT).show();
-
-            return;
-
-        }
-
-        int i=0;
-        StringBuffer stringBuffer= new StringBuffer();
-        while (cursor.moveToNext()) {
-
-            DataNameArrayList.add(cursor.getString(1));
-            customDataListModelList.add(new CustomDataListModel(cursor.getString(1),cursor.getString(2)));
-            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
-            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
-            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
-            stringBuffer.append("color :"+ cursor.getInt(3)+"\n");
-            stringBuffer.append("Font Size :"+ cursor.getInt(4)+"\n");
-            Log.e("CustomDataRecord", String.valueOf(customDataListModelList.get(i).Name));
-            i++;
-        }
-
-//            ViewDataDialog("DataRecords",String.valueOf(stringBuffer));
-
-    }
-
-
-    public void DataReadLastRecord(){
-        Cursor cursor=myhelper.getLastData();
-
-        if(cursor.getCount() ==0){
-            Toast.makeText(getApplicationContext(),"There is nothing inside Database",Toast.LENGTH_SHORT).show();
-
-            return;
-
-        }
-        StringBuffer stringBuffer= new StringBuffer();
-        while (cursor.moveToNext()) {
-
-
-            customDataListModelList.add(new CustomDataListModel(cursor.getString(1),cursor.getString(2)));
-            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
-            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
-            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
-
-        }
-
-//        ViewDataDialog("LastRecord",String.valueOf(stringBuffer));
-    }
-
-
-    public void DatatestRead(){
-
-        Cursor cursor=myhelper.getAllData();
-        if(cursor.getCount() ==0){
-            Toast.makeText(getApplicationContext(),"No Contact Selected",Toast.LENGTH_SHORT).show();
-
-            return;
-
-        }
-        StringBuffer stringBuffer= new StringBuffer();
-        while (cursor.moveToNext()) {
-            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
-            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
-            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
-            stringBuffer.append("color :"+ cursor.getInt(3)+"\n");
-            stringBuffer.append("Font Size :"+ cursor.getInt(4)+"\n");
-        }
-
-//        try {
-//            Toast.makeText(getApplicationContext(),DataNameArrayList.get(1),Toast.LENGTH_SHORT).show();
-//
-//        }catch (Exception e){
-//            Toast.makeText(getApplicationContext(),"exeption",Toast.LENGTH_SHORT).show();
-//
-//        }
-
-            ViewDataDialog("DataRecords",String.valueOf(stringBuffer));
-
-    }
-
-    public void ValidateDataRead(){
-
-//        Cursor cursor=myhelper.getAllData();
-//        if(cursor.getCount() ==0){
-//            Toast.makeText(getApplicationContext(),"No Contact Selected",Toast.LENGTH_SHORT).show();
-//
-//            return;
-//
-//        }
-//
-//        while (cursor.moveToNext()) {
-//            DataNameArrayList.add(cursor.getString(1));
-//        }
-//
-//
-//
-//        for(String str : DataNameArrayList) {
-//            Toast.makeText(getApplicationContext(),str,Toast.LENGTH_SHORT).show();
-//        }
-//
-//        int i=0;
-//
-//           if(DataNameArrayList.get(i).contains(getDisplayName())){
-//               Toast.makeText(getApplicationContext(),"same name",Toast.LENGTH_SHORT).show();
-//            }
-//
-//
-////        ViewDataDialog("Array",String.valueOf(stringBuffer));
-
-        int i=0;
-
-        try{
-            if(DataNameArrayList.get(i).contains(getDisplayName())){
-                Toast.makeText(getApplicationContext(),"same name",Toast.LENGTH_SHORT).show();
-            }}catch (Exception e){
-
-        }
-
-    }
-
     //#########################--thread method--######################################
 
     public void threadMethod(){
@@ -443,6 +298,162 @@ public class MainActivity extends AppCompatActivity implements CustomRecycleAdap
     @Override
     public void onDragStarted(RecyclerView.ViewHolder viewHolder) {
         mItemTouchHelper.startDrag(viewHolder);
+    }
+
+    @Override
+    public void onNoteListChanged(List<CustomDataListModel> customers) {
+        swapChecker=true;
+        for (CustomDataListModel customer : customers) {
+//            listOfSortedCustomerId.add(customer.getId());
+
+        }
+
+        //convert the List of Longs to a JSON string
+        Gson gson = new Gson();
+
+
+
+        }
+//#############--Data base methods / stuff--############################
+
+    //********************--insert method--***********************
+    public void tempinsert(String name,String num,String color,int size,int index){
+        boolean inSamedata=tempSqliteDatabaseHelper.IsItemExist(name,num);
+        if(inSamedata==false){
+            boolean indata = tempSqliteDatabaseHelper.insertData(new ContactModel(name,num,color,size,index));
+            if (indata == true) {
+                Log.e("DataSave","DataSave");
+            }
+            else{
+                Log.e("In_Data_not_True","In Data not True");
+            }
+        }else if(inSamedata==true){
+            Log.e("Record_Exist","Record Exist");
+        }
+    }
+
+    //********************--read data method--***********************
+    public void TDataRead(){
+
+        customDataListModelList.clear();
+        Cursor cursor=tempSqliteDatabaseHelper.getAllData();
+        if(cursor.getCount() ==0){
+            Log.e("No_temp","No temp Contact Selected");
+            return;
+        }
+        int i=0;
+        StringBuffer stringBuffer= new StringBuffer();
+        while (cursor.moveToNext()) {
+
+            DataNameArrayList.add(cursor.getString(1));
+            customDataListModelList.add(new CustomDataListModel(( cursor.getString(0)),cursor.getString(1),cursor.getString(2),cursor.getString(3),cursor.getInt(4),cursor.getInt(5)));
+            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
+            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
+            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
+            stringBuffer.append("color :"+ cursor.getString(3)+"\n");
+            stringBuffer.append("Font Size :"+ cursor.getInt(4)+"\n");
+            stringBuffer.append("Index:"+ cursor.getInt(5)+"\n");
+
+            Log.e("CustomDataRecord", String.valueOf(customDataListModelList.get(i).Name));
+            i++;
+        }
+
+    }
+
+    //********************--read last record method--***********************
+    public void TDataReadLastRecord(){
+        Cursor cursor=tempSqliteDatabaseHelper.getLastData();
+
+        if(cursor.getCount() ==0){
+            Toast.makeText(getApplicationContext(),"There is nothing inside Database",Toast.LENGTH_SHORT).show();
+
+            return;
+
+        }
+        StringBuffer stringBuffer= new StringBuffer();
+        while (cursor.moveToNext()) {
+
+            customDataListModelList.add(new CustomDataListModel(cursor.getString(1),cursor.getString(2)));
+            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
+            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
+            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
+
+        }
+    }
+
+    //********************--read for testing purpose --***********************
+    public void TDatatestRead(){
+
+        Cursor cursor=tempSqliteDatabaseHelper.getAllData();
+        if(cursor.getCount() ==0){
+            Toast.makeText(getApplicationContext(),"No temp Contact Selected",Toast.LENGTH_SHORT).show();
+
+            return;
+
+        }
+        StringBuffer stringBuffer= new StringBuffer();
+        while (cursor.moveToNext()) {
+            stringBuffer.append("Id :"+ cursor.getString(0)+"\n");
+            stringBuffer.append("Name :"+ cursor.getString(1)+"\n");
+            stringBuffer.append("Number :"+ cursor.getString(2)+"\n");
+            stringBuffer.append("color :"+ cursor.getString(3)+"\n");
+            stringBuffer.append("Font Size :"+ cursor.getInt(4)+"\n");
+            stringBuffer.append("Index:"+ cursor.getInt(5)+"\n");
+        }
+
+        ViewDataDialog("DataRecords",String.valueOf(stringBuffer));
+    }
+
+
+    public void chekerofDragDrop(){
+
+        if(swapChecker==true ) {
+            tempSqliteDatabaseHelper.deleteall();
+            for (int i = 0; i < chCustom.size(); i++) {
+                Log.e("chname", String.valueOf(chCustom.get(i).getName()));
+                tempinsert(chCustom.get(i).getName(), chCustom.get(i).getNumber(), chCustom.get(i).getColor(), chCustom.get(i).getFSize(), 1);
+            }
+        }
+    }
+
+    public void checkerofRemove(){
+        if(removeflag==true){
+            tempSqliteDatabaseHelper.deleteall();
+            for (int i = 0; i < reCustom.size(); i++) {
+                Log.e("chname", String.valueOf(reCustom.get(i).getName()));
+                tempinsert(reCustom.get(i).getName(), reCustom.get(i).getNumber(), reCustom.get(i).getColor(), reCustom.get(i).getFSize(), 1);
+            }
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(swapChecker==true ) {
+            chekerofDragDrop();
+        }else if(removeflag==true){
+            checkerofRemove();
+        }
+        else{
+            Log.e("no_drag_or_delete","no drag or delete");
+        }
+        removeflag=false;
+    }
+
+    private SwipeToDismiss.SwipetoDismissCallBack getCallback(final CustomRecycleAdapter adapter){
+        return new SwipeToDismiss.SwipetoDismissCallBack() {
+            @Override
+            public void onSwipedLeft(RecyclerView.ViewHolder viewHolder) {
+                Log.e("viewHOlder", String.valueOf(viewHolder.getAdapterPosition()));
+                adapter.remove(viewHolder.getAdapterPosition());
+            }
+
+            @Override
+            public void onSwipedRight(RecyclerView.ViewHolder viewHolder) {
+                Log.e("viewHOlder", String.valueOf(viewHolder.getAdapterPosition()));
+                adapter.remove(viewHolder.getAdapterPosition());
+            }
+        };
     }
 }
 

@@ -68,10 +68,43 @@
                     android:textSize="20dp"/>
 
             </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <ru.dimorinny.floatingtextbutton.FloatingTextButton
+                    android:layout_width="wrap_content"
+                    android:id="@+id/colorpick"
+                    android:layout_height="wrap_content"
+                    app:layout_behavior="ru.dimorinny.floatingtextbutton.behavior.SnackbarBehavior"
+                    app:floating_background_color="?attr/colorPrimary"
+                    app:floating_title="Pick Color"
+                    app:floating_title_color="@android:color/white"/>
+
+                <ru.dimorinny.floatingtextbutton.FloatingTextButton
+                    android:layout_width="wrap_content"
+                    android:id="@+id/sizepick"
+                    android:layout_height="wrap_content"
+                    app:layout_behavior="ru.dimorinny.floatingtextbutton.behavior.SnackbarBehavior"
+                    app:floating_background_color="?attr/colorPrimary"
+                    app:floating_title="Pick Font size"
+                    app:floating_title_color="@android:color/white"/>
+
+            </LinearLayout>
+
 
         </LinearLayout>
 
-
     </android.support.v7.widget.CardView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:id="@+id/frameid"
+        android:layout_height="wrap_content">
+
+    </FrameLayout>
 
 </LinearLayout>

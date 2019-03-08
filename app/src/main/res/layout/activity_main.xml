@@ -15,32 +15,52 @@
         app:layout_collapseMode="pin">
 
         <LinearLayout
-            android:id="@+id/notification"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true"
-            android:orientation="horizontal"
-            android:gravity="end">
+            android:layout_height="wrap_content">
 
-            <ImageView
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Q Contact"
+                    android:textColor="#ffff"
+                    android:textSize="35dp"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/notification"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:src="@drawable/ic_folder_open_black_24dp"
-                android:id="@+id/opendata"
-                android:layout_marginRight="5dp"/>
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="end"
-                android:id="@+id/viewArray"
-                android:src="@drawable/ic_fingerprint_black_24dp" />
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="end"
-                android:id="@+id/addimag"
-                android:src="@drawable/ic_add_black_24dp" />
+                android:clickable="true"
+                android:layout_marginLeft="50dp"
+                android:layout_gravity="right"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_folder_open_black_24dp"
+                    android:id="@+id/opendata"
+                    android:layout_marginLeft="50dp"
+                    android:layout_marginRight="5dp"/>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="end"
+                    android:id="@+id/addimag"
+                    android:src="@drawable/ic_add_black_24dp" />
+            </LinearLayout>
+
+
         </LinearLayout>
+
+
 
     </android.support.v7.widget.Toolbar>
 
